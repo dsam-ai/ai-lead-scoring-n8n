@@ -1,48 +1,36 @@
-# AI Lead Scoring Automation — n8n + Google Gemini
+# AI Lead Scoring Automation — n8n + Groq AI
 
-An intelligent lead scoring workflow that uses **Google Gemini AI** to automatically analyze, score, and prioritize incoming leads.
+An intelligent lead scoring workflow that uses **Groq AI (Llama 3.3 70B)** to automatically analyze, score, and prioritize incoming leads in real-time.
+
+## Workflow Screenshot
+
+![AI Lead Scoring Workflow](workflow-screenshot.png)
 
 ## What It Does
 
-1. **Webhook** receives a new lead (Name, Email, Company, Job Title, Message)
-2. **Google Gemini AI** analyzes the lead and returns a score (1–10), tier (Hot/Warm/Cold), reasoning, and recommended action
+1. **Webhook** receives a new lead (Name, Email, Company, Job Title)
+2. **Groq AI (Llama 3.3 70B)** analyzes the lead and returns a score (0–100), tier (Hot/Warm/Cold), reasoning, and recommended action
 3. **Google Sheets** stores the lead with AI-generated score and tags
-4. **Gmail** sends an instant notification with the full AI analysis
-
-## AI Scoring Output
-
-```json
-{
-  "score": 8,
-  "tier": "Hot",
-  "reason": "VP-level at a 500+ employee SaaS company — high budget authority",
-  "priority_action": "Call within 2 hours, prepare enterprise pricing deck"
-}
-```
+4. **Gmail** sends an instant notification with the lead summary
 
 ## Tech Stack
 
-- [n8n](https://n8n.io) — workflow automation
-- Google Gemini 2.0 Flash-Lite — AI analysis (free tier)
-- Google Sheets — lead database
-- Gmail — instant notifications
-- Webhook — real-time trigger
+- **n8n** — workflow automation
+- **Groq API** (llama-3.3-70b-versatile) — AI scoring
+- **Google Sheets** — lead database
+- **Gmail** — notifications
 
-## Workflow
+## Webhook Input
 
-```
-[Webhook] → [Gemini AI] → [Google Sheets] → [Gmail Notification]
-```
 
-## Setup
 
-1. Import `workflow.json` into n8n
-2. Add your Gemini API key (get free at aistudio.google.com)
-3. Connect Google Sheets and Gmail credentials
-4. Activate — every new lead gets scored automatically
+## AI Output Example
 
-## About
 
-Built by **Dilovar Sam** — AI & Automation Freelancer
-📍 Houston, TX | n8n · Zapier · Make · API integrations
-🔗 [Upwork Profile](https://www.upwork.com)
+
+## Production Webhook
+
+{"message":"Workflow was started"}
+
+---
+Built by [Dilovar Sam](https://github.com/dsam-ai) | AI & Automation Freelancer
