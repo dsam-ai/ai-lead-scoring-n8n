@@ -1,0 +1,113 @@
+{
+  "name": "AI Lead Scoring",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "score-lead",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1alpha/models/gemini-2.0-flash-lite:generateContent",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "key",
+              "value": "YOUR_GEMINI_API_KEY"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": {
+          "contents": [
+            {
+              "parts": [
+                {
+                  "text": "=You are a lead scoring expert. Analyze this lead and return ONLY a JSON object with: score (1-10), tier (Hot/Warm/Cold), reason (one sentence), and priority_action (what to do next).\n\nLead info:\nName: {{ $json.name }}\nEmail: {{ $json.email }}\nCompany: {{ $json.company }}\nJob Title: {{ $json.title }}\nMessage: {{ $json.message }}\n\nReturn ONLY valid JSON, no markdown."
+                }
+              ]
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "gemini-ai",
+      "name": "Gemini AI Scoring",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_SHEET_ID",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Leads",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Name": "={{ $('Webhook Trigger').item.json.name }}",
+            "Email": "={{ $('Webhook Trigger').item.json.email }}",
+            "Company": "={{ $('Webhook Trigger').item.json.company }}",
+            "Title": "={{ $('Webhook Trigger').item.json.title }}",
+            "Score": "={{ JSON.parse($json.candidates[0].content.parts[0].text).score }}",
+            "Tier": "={{ JSON.parse($json.candidates[0].content.parts[0].text).tier }}",
+            "Reason": "={{ JSON.parse($json.candidates[0].content.parts[0].text).reason }}",
+            "Action": "={{ JSON.parse($json.candidates[0].content.parts[0].text).priority_action }}",
+            "Date": "={{ new Date().toISOString() }}"
+          }
+        },
+        "options": {}
+      },
+      "id": "google-sheets",
+      "name": "Save to Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "sendTo": "dilovarsam.ai@gmail.com",
+        "subject": "={{ '🎯 New Lead Scored: ' + $('Webhook Trigger').item.json.name + ' — ' + JSON.parse($('Gemini AI Scoring').item.json.candidates[0].content.parts[0].text).tier }}",
+        "message": "=<b>New Lead Scored!</b><br><br><b>Name:</b> {{ $('Webhook Trigger').item.json.name }}<br><b>Company:</b> {{ $('Webhook Trigger').item.json.company }}<br><b>Title:</b> {{ $('Webhook Trigger').item.json.title }}<br><br><b>🤖 AI Score:</b> {{ JSON.parse($('Gemini AI Scoring').item.json.candidates[0].content.parts[0].text).score }}/10<br><b>Tier:</b> {{ JSON.parse($('Gemini AI Scoring').item.json.candidates[0].content.parts[0].text).tier }}<br><b>Reason:</b> {{ JSON.parse($('Gemini AI Scoring').item.json.candidates[0].content.parts[0].text).reason }}<br><b>Next Action:</b> {{ JSON.parse($('Gemini AI Scoring').item.json.candidates[0].content.parts[0].text).priority_action }}",
+        "options": {}
+      },
+      "id": "gmail-notify",
+      "name": "Email Notification",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2,
+      "position": [900, 300]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [[{"node": "Gemini AI Scoring", "type": "main", "index": 0}]]
+    },
+    "Gemini AI Scoring": {
+      "main": [[{"node": "Save to Google Sheets", "type": "main", "index": 0}]]
+    },
+    "Save to Google Sheets": {
+      "main": [[{"node": "Email Notification", "type": "main", "index": 0}]]
+    }
+  },
+  "active": false,
+  "settings": {}
+}
